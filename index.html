@@ -1033,21 +1033,8 @@ td {
       <input id="loginPassword" type="password" required placeholder="Sua senha">
     </div>
 
-<button type="button" id="forgotButton" style="
-  display:block;
-  width:100%;
-  margin:12px 0;
-  border:0;
-  background:transparent;
-  color:#8f1812;
-  font-size:13px;
-  font-weight:700;
-  cursor:pointer;
-">
-  Esqueci minha senha
-</button>
+    <p id="loginError" style="font-size:11px;color:#b52b25;margin-bottom:12px"></p>
 
-<p id="loginError" style="font-size:11px;color:#b52b25;margin-bottom:12px"></p>
     <button class="btn btn-primary" id="loginButton" type="submit" style="width:100%">
       Entrar na administração
     </button>
@@ -1589,6 +1576,7 @@ td {
 /* ==================================
    SUPABASE
 ================================== */
+
 const SUPABASE_URL = "https://dgcwrxrgeobwduynoyod.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_TkpO7ERPQySrZ1fZX2hkNg_qjR9afoZ";
 
@@ -1732,7 +1720,22 @@ function showAdmin() {
 
 /* Botão para solicitar recuperação */
 
-const forgotButton = document.getElementById("forgotButton");
+const forgotButton = document.createElement("button");
+forgotButton.type = "button";
+forgotButton.textContent = "Esqueci minha senha";
+forgotButton.style.cssText = `
+  display:block;
+  width:100%;
+  margin-top:15px;
+  border:0;
+  background:transparent;
+  color:#8f1812;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+`;
+
+loginForm.insertBefore(forgotButton, loginError);
 
 /* ==================================
    TELA DE NOVA SENHA
@@ -2268,44 +2271,17 @@ function closeModal() {
 }
 
 function editCommunity(id) {
-  const community = communities.find(
-    c => String(c.id) === String(id)
-  );
-
-  if (!community) {
-    alert("Comunidade não encontrada.");
-    return;
-  }
-
-  document.getElementById("communityForm").reset();
+  const community = communities.find(c => String(c.id) === String(id));
+  if (!community) return;
 
   document.getElementById("editId").value = community.id;
   document.getElementById("communityName").value = community.name;
   document.getElementById("communitySlug").value = community.slug;
   document.getElementById("communityDescription").value = community.description;
-  document.getElementById("communityLogo").value = community.logo || "";
-  document.getElementById("communitySite").value = community.site || "";
-
-  currentLogoUrl = community.logo || "";
-  currentBannerUrl = community.banner || "";
-
-  logoFileInput.value = "";
-  bannerFileInput.value = "";
-
-  bannerUrlInput.value = community.banner || "";
-
-  selectedBannerColor = community.bannerColor || "#8f1812";
-
-  selectBannerColor(selectedBannerColor);
-
-  previewLogo(community.logo || "");
-  previewBanner();
-
-  document.getElementById("logoUploadStatus").textContent = "";
-  document.getElementById("bannerUploadStatus").textContent = "";
+  document.getElementById("communityLogo").value = community.logo;
+  document.getElementById("communitySite").value = community.site;
 
   document.getElementById("modalTitle").textContent = "Editar comunidade";
-
   document.getElementById("communityModal").classList.add("open");
 
   lucide.createIcons();
@@ -2315,54 +2291,30 @@ function editCommunity(id) {
    SALVAR COMUNIDADE
 ================================== */
 
-/* ==========================================
-   SALVAR E EDITAR COMUNIDADES
-========================================== */
-
-const communityFormElement = document.getElementById("communityForm");
-
-communityFormElement.addEventListener("submit", async event => {
+document.getElementById("communityForm").addEventListener("submit", async event => {
   event.preventDefault();
 
-  const submitButton = communityFormElement.querySelector(
-    'button[type="submit"]'
-  );
-
-  if (submitButton.disabled) return;
-
+  const submitButton = event.submitter;
   const editId = document.getElementById("editId").value;
 
   const name = document.getElementById("communityName").value.trim();
 
-  const slug = document.getElementById("communitySlug")
-    .value.trim()
+  const slug = document.getElementById("communitySlug").value
+    .trim()
     .toLowerCase()
     .replace(/[^a-z0-9-]/g, "");
 
   const description = document.getElementById("communityDescription").value.trim();
-
+  const logo = document.getElementById("communityLogo").value.trim();
   const site = document.getElementById("communitySite").value.trim();
-
-  const externalLogo = logoField.value.trim();
-  const externalBanner = bannerUrlInput.value.trim();
-
-  const existing = communities.find(
-    c => String(c.id) === String(editId)
-  );
 
   if (!name || !slug || !site) {
     alert("Preencha os campos obrigatórios.");
     return;
   }
 
-  if (editId && !existing) {
-    alert("Não foi possível localizar a comunidade para edição.");
-    return;
-  }
-
   const duplicate = communities.some(c =>
-    c.slug.toLowerCase() === slug &&
-    String(c.id) !== String(editId)
+    c.slug === slug && String(c.id) !== String(editId)
   );
 
   if (duplicate) {
@@ -2370,130 +2322,46 @@ communityFormElement.addEventListener("submit", async event => {
     return;
   }
 
-  try {
-    new URL(site);
+  const existing = communities.find(c => String(c.id) === String(editId));
 
-    if (externalLogo && !logoFileInput.files[0]) {
-      new URL(externalLogo);
-    }
+  const payload = {
+    name,
+    category: existing?.category || "Geral",
+    description,
+    website_url: site
+  };
 
-    if (externalBanner && !bannerFileInput.files[0]) {
-      new URL(externalBanner);
-    }
-  } catch {
-    alert("Uma das URLs informadas é inválida.");
-    return;
-  }
-
-  const logoFile = logoFileInput.files[0];
-  const bannerFile = bannerFileInput.files[0];
+  if (optionalColumns.slug) payload.slug = slug;
+  if (optionalColumns.logo_url) payload.logo_url = logo;
+  if (optionalColumns.active) payload.active = existing
+    ? existing.status === "Ativa"
+    : true;
 
   submitButton.disabled = true;
   submitButton.textContent = "Salvando...";
 
-  try {
-    let finalLogo = existing?.logo || "";
-    let finalBanner = existing?.banner || "";
+  let result;
 
-    if (externalLogo) {
-      finalLogo = externalLogo;
-    }
-
-    if (externalBanner) {
-      finalBanner = externalBanner;
-    }
-
-    if (logoFile) {
-      finalLogo = await uploadCommunityImage(
-        logoFile,
-        slug,
-        "logo"
-      );
-    }
-
-    if (bannerFile) {
-      finalBanner = await uploadCommunityImage(
-        bannerFile,
-        slug,
-        "banner"
-      );
-    }
-
-    const payload = {
-      name,
-      category: existing?.category || "Geral",
-      description,
-      website_url: site
-    };
-
-    if (optionalColumns.slug) {
-      payload.slug = slug;
-    }
-
-    if (optionalColumns.logo_url) {
-      payload.logo_url = finalLogo;
-    }
-
-    if (optionalColumns.banner_url) {
-      payload.banner_url = finalBanner;
-    }
-
-    if (optionalColumns.banner_color) {
-      payload.banner_color = selectedBannerColor;
-    }
-
-    if (optionalColumns.active) {
-      payload.active = existing
-        ? existing.status === "Ativa"
-        : true;
-    }
-
-    let result;
-
-    if (editId) {
-      result = await db
-        .from("communities")
-        .update(payload)
-        .eq("id", editId);
-    } else {
-      result = await db
-        .from("communities")
-        .insert(payload);
-    }
-
-    if (result.error) {
-      throw new Error(result.error.message);
-    }
-
-    await loadCommunities();
-
-    render();
-
-    closeModal();
-
-    alert(
-      editId
-        ? "Comunidade atualizada com sucesso!"
-        : "Comunidade cadastrada com sucesso!"
-    );
-
-  } catch (error) {
-    console.error(error);
-
-    alert(
-      "Erro ao salvar comunidade:\n" + error.message
-    );
-
-  } finally {
-    submitButton.disabled = false;
-
-    submitButton.innerHTML = `
-      <i data-lucide="save"></i>
-      Salvar comunidade
-    `;
-
-    lucide.createIcons();
+  if (editId) {
+    result = await db.from("communities")
+      .update(payload)
+      .eq("id", editId);
+  } else {
+    result = await db.from("communities").insert(payload);
   }
+
+  submitButton.disabled = false;
+  submitButton.innerHTML = '<i data-lucide="save"></i> Salvar comunidade';
+  lucide.createIcons();
+
+  if (result.error) {
+    alert("Não foi possível salvar:\n" + result.error.message);
+    return;
+  }
+
+  await loadCommunities();
+  render();
+  closeModal();
 });
 
 /* ==================================
@@ -3315,7 +3183,9 @@ render = function() {
 /* FINALIZAÇÃO */
 
 lucide.createIcons();
-  /* ==========================================
+
+
+/* ==========================================
    ACEN — LOGOS, BANNERS E CORES
 ========================================== */
 
@@ -3333,153 +3203,57 @@ mediaStyles.textContent = `
     border-radius: 10px;
     background: var(--input);
   }
-
-  .community-media-title {
-    font-size: 12px;
-    font-weight: 800;
-    margin-bottom: 12px;
-  }
-
+  .community-media-title { font-size: 12px; font-weight: 800; margin-bottom: 12px; }
   .media-preview {
-    width: 100%;
-    height: 105px;
-    border: 1px dashed var(--border);
-    border-radius: 9px;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--surface);
-    margin-top: 10px;
-    color: var(--muted);
-    font-size: 11px;
-    position: relative;
+    width: 100%; height: 105px;
+    border: 1px dashed var(--border); border-radius: 9px;
+    overflow: hidden; display: flex; align-items: center; justify-content: center;
+    background: var(--surface); margin-top: 10px;
+    color: var(--muted); font-size: 11px; position: relative;
   }
-
-  .media-preview img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
+  .media-preview img { width: 100%; height: 100%; object-fit: cover; }
   .logo-preview {
-    width: 85px;
-    height: 85px;
-    border-radius: 12px;
-    margin-top: 10px;
-    overflow: hidden;
-    background: var(--surface);
+    width: 85px; height: 85px; border-radius: 12px; margin-top: 10px;
+    overflow: hidden; background: var(--surface);
     border: 1px dashed var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--muted);
-    font-size: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted); font-size: 10px;
   }
-
-  .logo-preview img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
+  .logo-preview img { width: 100%; height: 100%; object-fit: cover; }
   .media-upload {
-    display: block;
-    width: 100%;
-    padding: 11px;
-    border: 1px dashed var(--border);
-    border-radius: 8px;
-    background: var(--surface);
-    color: var(--text);
-    font-size: 11px;
-    cursor: pointer;
+    display: block; width: 100%; padding: 11px;
+    border: 1px dashed var(--border); border-radius: 8px;
+    background: var(--surface); color: var(--text);
+    font-size: 11px; cursor: pointer;
   }
-
-  .rainbow-palette {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 7px;
-    margin-top: 10px;
-  }
-
+  .rainbow-palette { display: grid; grid-template-columns: repeat(7, 1fr); gap: 7px; margin-top: 10px; }
   .rainbow-color {
-    width: 100%;
-    aspect-ratio: 1;
-    border: 3px solid transparent;
-    border-radius: 9px;
-    cursor: pointer;
-    transition: .2s;
+    width: 100%; aspect-ratio: 1; border: 3px solid transparent;
+    border-radius: 9px; cursor: pointer; transition: .2s;
   }
-
-  .rainbow-color.selected {
-    border-color: var(--text);
-    outline: 2px solid var(--primary);
-    transform: scale(1.06);
-  }
-
-  .rainbow-color:hover {
-    transform: translateY(-2px);
-  }
-
-  .media-status {
-    font-size: 10px;
-    color: var(--muted);
-    margin-top: 7px;
-    min-height: 14px;
-  }
-
-  .banner-color-custom {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 12px;
-    font-size: 11px;
-  }
-
-  .banner-color-custom input {
-    width: 45px;
-    height: 35px;
-    padding: 2px;
-    cursor: pointer;
-  }
-
-  @media(max-width:430px) {
-    .rainbow-palette {
-      grid-template-columns: repeat(7, 1fr);
-      gap: 5px;
-    }
-  }
+  .rainbow-color.selected { border-color: var(--text); outline: 2px solid var(--primary); transform: scale(1.06); }
+  .rainbow-color:hover { transform: translateY(-2px); }
+  .media-status { font-size: 10px; color: var(--muted); margin-top: 7px; min-height: 14px; }
+  .banner-color-custom { display: flex; align-items: center; gap: 10px; margin-top: 12px; font-size: 11px; }
+  .banner-color-custom input { width: 45px; height: 35px; padding: 2px; cursor: pointer; }
+  @media(max-width:430px) { .rainbow-palette { gap: 5px; } }
 `;
 
 document.head.appendChild(mediaStyles);
 
 
-/* CAMPOS DE IMAGEM */
+/* CAMPOS DE LOGO */
 
 const logoField = document.getElementById("communityLogo");
 
 const logoUploadGroup = document.createElement("div");
-
 logoUploadGroup.className = "form-group";
-
 logoUploadGroup.innerHTML = `
   <label>Enviar arquivo da logo</label>
-
-  <input
-    type="file"
-    id="communityLogoFile"
-    class="media-upload"
-    accept="image/jpeg,image/png,image/webp"
-  >
-
-  <div class="form-hint">
-    JPG, JPEG, PNG ou WebP. O arquivo será enviado ao Storage.
-  </div>
-
-  <div id="logoPreview" class="logo-preview">
-    Prévia da logo
-  </div>
-
+  <input type="file" id="communityLogoFile" class="media-upload"
+    accept="image/jpeg,image/png,image/webp">
+  <div class="form-hint">JPG, JPEG, PNG ou WebP. O arquivo será enviado ao Storage.</div>
+  <div id="logoPreview" class="logo-preview">Prévia da logo</div>
   <div id="logoUploadStatus" class="media-status"></div>
 `;
 
@@ -3489,78 +3263,38 @@ logoField.parentElement.after(logoUploadGroup);
 /* BANNER */
 
 const bannerSection = document.createElement("div");
-
 bannerSection.className = "community-media-section";
-
 bannerSection.innerHTML = `
   <div class="community-media-title">
     <i data-lucide="image" style="width:15px;vertical-align:middle"></i>
     Banner da comunidade
-    <span style="font-weight:400;color:var(--muted)">
-      (opcional)
-    </span>
+    <span style="font-weight:400;color:var(--muted)">(opcional)</span>
   </div>
 
   <div class="form-group">
     <label>URL externa do banner</label>
-    <input
-      id="communityBannerUrl"
-      type="url"
-      placeholder="https://exemplo.com/banner.jpg"
-    >
-    <div class="form-hint">
-      Você também pode usar uma imagem hospedada em outro site.
-    </div>
+    <input id="communityBannerUrl" type="url" placeholder="https://exemplo.com/banner.jpg">
+    <div class="form-hint">Você também pode usar uma imagem hospedada em outro site.</div>
   </div>
 
   <div class="form-group">
     <label>Enviar banner</label>
-    <input
-      type="file"
-      id="communityBannerFile"
-      class="media-upload"
-      accept="image/jpeg,image/png,image/webp"
-    >
-    <div class="form-hint">
-      JPG, JPEG, PNG ou WebP.
-    </div>
+    <input type="file" id="communityBannerFile" class="media-upload"
+      accept="image/jpeg,image/png,image/webp">
+    <div class="form-hint">JPG, JPEG, PNG ou WebP.</div>
   </div>
 
   <div class="form-group">
     <label>Cor do banner</label>
-
     <div class="rainbow-palette" id="bannerPalette">
-
-      <button type="button" class="rainbow-color"
-        data-color="#ef4444" style="background:#ef4444"
-        title="Vermelho"></button>
-
-      <button type="button" class="rainbow-color"
-        data-color="#f97316" style="background:#f97316"
-        title="Laranja"></button>
-
-      <button type="button" class="rainbow-color"
-        data-color="#eab308" style="background:#eab308"
-        title="Amarelo"></button>
-
-      <button type="button" class="rainbow-color"
-        data-color="#22c55e" style="background:#22c55e"
-        title="Verde"></button>
-
-      <button type="button" class="rainbow-color"
-        data-color="#3b82f6" style="background:#3b82f6"
-        title="Azul"></button>
-
-      <button type="button" class="rainbow-color"
-        data-color="#6366f1" style="background:#6366f1"
-        title="Índigo"></button>
-
-      <button type="button" class="rainbow-color"
-        data-color="#a855f7" style="background:#a855f7"
-        title="Violeta"></button>
-
+      <button type="button" class="rainbow-color" data-color="#ef4444" style="background:#ef4444" title="Vermelho"></button>
+      <button type="button" class="rainbow-color" data-color="#f97316" style="background:#f97316" title="Laranja"></button>
+      <button type="button" class="rainbow-color" data-color="#eab308" style="background:#eab308" title="Amarelo"></button>
+      <button type="button" class="rainbow-color" data-color="#22c55e" style="background:#22c55e" title="Verde"></button>
+      <button type="button" class="rainbow-color" data-color="#3b82f6" style="background:#3b82f6" title="Azul"></button>
+      <button type="button" class="rainbow-color" data-color="#6366f1" style="background:#6366f1" title="Índigo"></button>
+      <button type="button" class="rainbow-color" data-color="#a855f7" style="background:#a855f7" title="Violeta"></button>
     </div>
-
     <div class="banner-color-custom">
       <span>Cor personalizada:</span>
       <input type="color" id="bannerCustomColor" value="#8f1812">
@@ -3568,21 +3302,14 @@ bannerSection.innerHTML = `
   </div>
 
   <div>
-    <label style="font-size:11px;font-weight:800">
-      Prévia do banner
-    </label>
-
-    <div id="bannerPreview" class="media-preview"
-      style="background:#8f1812">
-      Prévia do banner
-    </div>
+    <label style="font-size:11px;font-weight:800">Prévia do banner</label>
+    <div id="bannerPreview" class="media-preview" style="background:#8f1812">Prévia do banner</div>
   </div>
 
   <div id="bannerUploadStatus" class="media-status"></div>
 `;
 
-document.getElementById("communitySite")
-  .parentElement.before(bannerSection);
+document.getElementById("communitySite").parentElement.before(bannerSection);
 
 lucide.createIcons();
 
@@ -3591,17 +3318,12 @@ lucide.createIcons();
 
 const logoFileInput = document.getElementById("communityLogoFile");
 const bannerFileInput = document.getElementById("communityBannerFile");
-
 const logoPreview = document.getElementById("logoPreview");
 const bannerPreview = document.getElementById("bannerPreview");
-
 const bannerUrlInput = document.getElementById("communityBannerUrl");
 const bannerCustomColor = document.getElementById("bannerCustomColor");
 
 let selectedBannerColor = "#8f1812";
-
-let currentLogoUrl = "";
-let currentBannerUrl = "";
 
 
 /* VALIDAÇÃO DE ARQUIVOS */
@@ -3609,11 +3331,7 @@ let currentBannerUrl = "";
 function validateCommunityImage(file) {
   if (!file) return false;
 
-  const allowedTypes = [
-    "image/jpeg",
-    "image/png",
-    "image/webp"
-  ];
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
 
   if (!allowedTypes.includes(file.type)) {
     alert("Formato inválido. Use JPG, JPEG, PNG ou WebP.");
@@ -3629,7 +3347,7 @@ function validateCommunityImage(file) {
 }
 
 
-/* PRÉVIA DA LOGO */
+/* PRÉVIAS */
 
 function previewLogo(source) {
   if (!source) {
@@ -3643,33 +3361,24 @@ function previewLogo(source) {
   `;
 }
 
-
-/* PRÉVIA DO BANNER */
-
 function previewBanner() {
   const url = bannerUrlInput.value.trim();
 
-  if (url) {
-    bannerPreview.style.background = selectedBannerColor;
+  bannerPreview.style.background = selectedBannerColor;
 
+  if (url) {
     bannerPreview.innerHTML = `
       <img src="${escapeHTML(url)}" alt="Prévia do banner"
         onerror="this.parentElement.innerHTML='Não foi possível carregar a imagem'">
     `;
-
     return;
   }
 
   bannerPreview.innerHTML = "Prévia do banner";
-  bannerPreview.style.background = selectedBannerColor;
 }
-
-
-/* PRÉVIA AO SELECIONAR LOGO */
 
 logoFileInput.addEventListener("change", () => {
   const file = logoFileInput.files[0];
-
   if (!file) return;
 
   if (!validateCommunityImage(file)) {
@@ -3678,13 +3387,9 @@ logoFileInput.addEventListener("change", () => {
   }
 
   previewLogo(URL.createObjectURL(file));
-
   document.getElementById("logoUploadStatus").textContent =
     "Imagem selecionada. Será enviada ao salvar.";
 });
-
-
-/* PRÉVIA AO SELECIONAR BANNER */
 
 bannerFileInput.addEventListener("change", () => {
   const file = bannerFileInput.files[0];
@@ -3699,26 +3404,20 @@ bannerFileInput.addEventListener("change", () => {
     return;
   }
 
-  bannerPreview.innerHTML = `
-    <img src="${URL.createObjectURL(file)}" alt="Prévia do banner">
-  `;
+  bannerPreview.innerHTML =
+    `<img src="${URL.createObjectURL(file)}" alt="Prévia do banner">`;
 
   document.getElementById("bannerUploadStatus").textContent =
     "Banner selecionado. Será enviado ao salvar.";
 });
 
-
-/* URL EXTERNA */
-
 logoField.addEventListener("input", () => {
   if (logoFileInput.files.length) return;
-
   previewLogo(logoField.value.trim());
 });
 
 bannerUrlInput.addEventListener("input", () => {
   if (bannerFileInput.files.length) return;
-
   previewBanner();
 });
 
@@ -3727,7 +3426,6 @@ bannerUrlInput.addEventListener("input", () => {
 
 function selectBannerColor(color) {
   selectedBannerColor = color;
-
   bannerCustomColor.value = color;
 
   document.querySelectorAll(".rainbow-color").forEach(button => {
@@ -3741,23 +3439,21 @@ function selectBannerColor(color) {
 }
 
 document.querySelectorAll(".rainbow-color").forEach(button => {
-  button.addEventListener("click", () => {
-    selectBannerColor(button.dataset.color);
-  });
+  button.addEventListener("click", () => selectBannerColor(button.dataset.color));
 });
 
 bannerCustomColor.addEventListener("input", () => {
   selectedBannerColor = bannerCustomColor.value;
 
   document.querySelectorAll(".rainbow-color").forEach(button => {
-    button.classList.toggle("selected", false);
+    button.classList.remove("selected");
   });
 
   previewBanner();
 });
 
 
-/* DETECTAR NOVAS COLUNAS */
+/* NOVAS COLUNAS */
 
 const originalDetectColumns = detectColumns;
 
@@ -3768,53 +3464,40 @@ detectColumns = async function() {
   optionalColumns.banner_color = false;
 
   for (const column of ["banner_url", "banner_color"]) {
-    const { error } = await db
-      .from("communities")
-      .select(column)
-      .limit(1);
-
+    const { error } = await db.from("communities").select(column).limit(1);
     optionalColumns[column] = !error;
   }
 };
 
 
-/* NORMALIZAR DADOS */
+/* NORMALIZAÇÃO */
 
 const originalNormalizeCommunity = normalizeCommunity;
 
 normalizeCommunity = function(row) {
   const community = originalNormalizeCommunity(row);
-
   community.banner = row.banner_url || "";
   community.bannerColor = row.banner_color || "#8f1812";
-
   return community;
 };
 
 
-/* RESETAR CAMPOS */
+/* NOVA COMUNIDADE */
 
 const originalOpenModal = openModal;
 
 openModal = function() {
   originalOpenModal();
 
-  currentLogoUrl = "";
-  currentBannerUrl = "";
-
   logoFileInput.value = "";
   bannerFileInput.value = "";
-
   bannerUrlInput.value = "";
 
   document.getElementById("logoUploadStatus").textContent = "";
   document.getElementById("bannerUploadStatus").textContent = "";
 
-  selectedBannerColor = "#8f1812";
-  selectBannerColor(selectedBannerColor);
-
+  selectBannerColor("#8f1812");
   previewLogo("");
-  previewBanner();
 };
 
 
@@ -3823,35 +3506,24 @@ openModal = function() {
 const originalEditCommunity = editCommunity;
 
 editCommunity = function(id) {
-  const community = communities.find(
-    c => String(c.id) === String(id)
-  );
-
+  const community = communities.find(c => String(c.id) === String(id));
   if (!community) return;
 
   originalEditCommunity(id);
 
-  currentLogoUrl = community.logo || "";
-  currentBannerUrl = community.banner || "";
-
   logoFileInput.value = "";
   bannerFileInput.value = "";
-
   bannerUrlInput.value = community.banner || "";
 
-  selectedBannerColor = community.bannerColor || "#8f1812";
-
-  selectBannerColor(selectedBannerColor);
-
+  selectBannerColor(community.bannerColor || "#8f1812");
   previewLogo(community.logo);
-  previewBanner();
 
   document.getElementById("logoUploadStatus").textContent = "";
   document.getElementById("bannerUploadStatus").textContent = "";
 };
 
 
-/* ENVIAR IMAGEM PARA O STORAGE */
+/* UPLOAD PARA O STORAGE */
 
 async function uploadCommunityImage(file, slug, type) {
   if (!file) return null;
@@ -3861,11 +3533,8 @@ async function uploadCommunityImage(file, slug, type) {
   }
 
   const extension = file.name.split(".").pop().toLowerCase();
-
   const safeSlug = slug.replace(/[^a-z0-9-]/g, "");
-
-  const filePath =
-    `communities/${safeSlug}/${type}-${Date.now()}.${extension}`;
+  const filePath = `communities/${safeSlug}/${type}-${Date.now()}.${extension}`;
 
   const { data, error } = await db.storage
     .from(COMMUNITY_BUCKET)
@@ -3877,8 +3546,7 @@ async function uploadCommunityImage(file, slug, type) {
 
   if (error) {
     throw new Error(
-      "Falha no upload de " +
-      (type === "logo" ? "logo" : "banner") +
+      "Falha no upload de " + (type === "logo" ? "logo" : "banner") +
       ": " + error.message
     );
   }
@@ -3891,41 +3559,31 @@ async function uploadCommunityImage(file, slug, type) {
 }
 
 
-/* SALVAR COMUNIDADE — SUBSTITUI O ENVIO ANTIGO */
+/* SALVAR COMUNIDADE (substitui o envio antigo)
+   Captura no document: roda antes do listener antigo em qualquer navegador. */
 
-const communityFormElement = document.getElementById("communityForm");
+document.addEventListener("submit", async event => {
+  const communityFormElement = document.getElementById("communityForm");
 
-communityFormElement.addEventListener("submit", async event => {
+  if (event.target !== communityFormElement) return;
+
   event.preventDefault();
-  event.stopImmediatePropagation();
+  event.stopPropagation();
 
-  const submitButton = communityFormElement.querySelector(
-    'button[type="submit"]'
-  );
-
+  const submitButton = communityFormElement.querySelector('button[type="submit"]');
   const editId = document.getElementById("editId").value;
 
-  const name = document.getElementById("communityName")
-    .value.trim();
+  const name = document.getElementById("communityName").value.trim();
 
-  const slug = document.getElementById("communitySlug")
-    .value.trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9-]/g, "");
+  const slug = document.getElementById("communitySlug").value
+    .trim().toLowerCase().replace(/[^a-z0-9-]/g, "");
 
-  const description = document.getElementById("communityDescription")
-    .value.trim();
-
+  const description = document.getElementById("communityDescription").value.trim();
   const externalLogo = logoField.value.trim();
-
   const externalBanner = bannerUrlInput.value.trim();
+  const site = document.getElementById("communitySite").value.trim();
 
-  const site = document.getElementById("communitySite")
-    .value.trim();
-
-  const existing = communities.find(
-    c => String(c.id) === String(editId)
-  );
+  const existing = communities.find(c => String(c.id) === String(editId));
 
   if (!name || !slug || !site) {
     alert("Preencha os campos obrigatórios.");
@@ -3941,55 +3599,38 @@ communityFormElement.addEventListener("submit", async event => {
     return;
   }
 
-  if (externalLogo && !logoFileInput.files[0]) {
-    try {
-      new URL(externalLogo);
-    } catch {
+  const logoFile = logoFileInput.files[0];
+  const bannerFile = bannerFileInput.files[0];
+
+  if (externalLogo && !logoFile) {
+    try { new URL(externalLogo); } catch {
       alert("A URL da logo não é válida.");
       return;
     }
   }
 
-  if (externalBanner && !bannerFileInput.files[0]) {
-    try {
-      new URL(externalBanner);
-    } catch {
+  if (externalBanner && !bannerFile) {
+    try { new URL(externalBanner); } catch {
       alert("A URL do banner não é válida.");
       return;
     }
   }
-
-  const logoFile = logoFileInput.files[0];
-  const bannerFile = bannerFileInput.files[0];
 
   submitButton.disabled = true;
   submitButton.textContent = "Preparando...";
 
   document.getElementById("logoUploadStatus").textContent =
     logoFile ? "Enviando logo..." : "";
-
   document.getElementById("bannerUploadStatus").textContent =
     bannerFile ? "Enviando banner..." : "";
 
   try {
-    let finalLogo = externalLogo || currentLogoUrl || "";
-    let finalBanner = externalBanner || currentBannerUrl || "";
+    /* Os campos de URL já vêm preenchidos na edição; vazio = remover. */
+    let finalLogo = externalLogo;
+    let finalBanner = externalBanner;
 
-    if (logoFile) {
-      finalLogo = await uploadCommunityImage(
-        logoFile,
-        slug,
-        "logo"
-      );
-    }
-
-    if (bannerFile) {
-      finalBanner = await uploadCommunityImage(
-        bannerFile,
-        slug,
-        "banner"
-      );
-    }
+    if (logoFile) finalLogo = await uploadCommunityImage(logoFile, slug, "logo");
+    if (bannerFile) finalBanner = await uploadCommunityImage(bannerFile, slug, "banner");
 
     const payload = {
       name,
@@ -3998,89 +3639,48 @@ communityFormElement.addEventListener("submit", async event => {
       website_url: site
     };
 
-    if (optionalColumns.slug) {
-      payload.slug = slug;
-    }
-
-    if (optionalColumns.logo_url) {
-      payload.logo_url = finalLogo;
-    }
-
-    if (optionalColumns.banner_url) {
-      payload.banner_url = finalBanner;
-    }
-
-    if (optionalColumns.banner_color) {
-      payload.banner_color = selectedBannerColor;
-    }
-
+    if (optionalColumns.slug) payload.slug = slug;
+    if (optionalColumns.logo_url) payload.logo_url = finalLogo;
+    if (optionalColumns.banner_url) payload.banner_url = finalBanner;
+    if (optionalColumns.banner_color) payload.banner_color = selectedBannerColor;
     if (optionalColumns.active) {
-      payload.active = existing
-        ? existing.status === "Ativa"
-        : true;
+      payload.active = existing ? existing.status === "Ativa" : true;
     }
 
     submitButton.textContent = "Salvando comunidade...";
 
-    let result;
+    const result = editId
+      ? await db.from("communities").update(payload).eq("id", editId)
+      : await db.from("communities").insert(payload);
 
-    if (editId) {
-      result = await db
-        .from("communities")
-        .update(payload)
-        .eq("id", editId);
-    } else {
-      result = await db
-        .from("communities")
-        .insert(payload);
-    }
-
-    if (result.error) {
-      throw new Error(result.error.message);
-    }
+    if (result.error) throw new Error(result.error.message);
 
     await loadCommunities();
-
     render();
-
     closeModal();
 
-    alert(
-      editId
-        ? "Comunidade atualizada com sucesso!"
-        : "Comunidade cadastrada com sucesso!"
-    );
+    alert(editId
+      ? "Comunidade atualizada com sucesso!"
+      : "Comunidade cadastrada com sucesso!");
 
   } catch (error) {
     console.error("Erro ao salvar comunidade:", error);
-
-    alert(
-      "Não foi possível salvar a comunidade:\n\n" +
-      error.message
-    );
+    alert("Não foi possível salvar a comunidade:\n\n" + error.message);
 
   } finally {
     submitButton.disabled = false;
-
-    submitButton.innerHTML = `
-      <i data-lucide="save"></i>
-      Salvar comunidade
-    `;
-
+    submitButton.innerHTML = `<i data-lucide="save"></i> Salvar comunidade`;
     lucide.createIcons();
   }
-
 }, true);
 
 
 /* FINALIZAÇÃO */
 
 previewLogo("");
-previewBanner();
-
 selectBannerColor("#8f1812");
-
 lucide.createIcons();
+
 </script>
 
 </body>
