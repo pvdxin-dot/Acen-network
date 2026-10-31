@@ -1572,136 +1572,6 @@ td {
    CONFIGURAÇÕES DE APARÊNCIA
 ================================== */
 
-const APPEARANCE_KEY = "ermo-admin-appearance";
-
-const defaultAppearance = {
-  theme: "light",
-  palette: "ermo",
-  background: "none"
-};
-
-let appearance = loadAppearance();
-
-function loadAppearance() {
-  try {
-    const saved = localStorage.getItem(APPEARANCE_KEY);
-    return saved
-      ? { ...defaultAppearance, ...JSON.parse(saved) }
-      : { ...defaultAppearance };
-  } catch {
-    return { ...defaultAppearance };
-  }
-}
-
-function saveAppearance() {
-  localStorage.setItem(APPEARANCE_KEY, JSON.stringify(appearance));
-}
-
-function applyAppearance() {
-  document.body.classList.toggle("dark", appearance.theme === "dark");
-
-  document.body.classList.remove(
-    "palette-ermo",
-    "palette-ocean",
-    "palette-forest",
-    "palette-purple",
-    "palette-gold",
-    "palette-graphite"
-  );
-
-  document.body.classList.add("palette-" + appearance.palette);
-
-  document.body.classList.remove(
-    "pattern-grid",
-    "pattern-dots",
-    "pattern-diagonal",
-    "pattern-gradient"
-  );
-
-  if (appearance.background !== "none") {
-    document.body.classList.add("pattern-" + appearance.background);
-  }
-
-  updateAppearanceButtons();
-}
-
-function updateAppearanceButtons() {
-  document.querySelectorAll(".theme-choice").forEach(button => {
-    button.classList.toggle(
-      "selected",
-      button.dataset.theme === appearance.theme
-    );
-  });
-
-  document.querySelectorAll(".color-choice").forEach(button => {
-    button.classList.toggle(
-      "selected",
-      button.dataset.palette === appearance.palette
-    );
-  });
-
-  document.querySelectorAll(".background-choice").forEach(button => {
-    button.classList.toggle(
-      "selected",
-      button.dataset.background === appearance.background
-    );
-  });
-}
-
-document.querySelectorAll(".theme-choice").forEach(button => {
-  button.addEventListener("click", () => {
-    appearance.theme = button.dataset.theme;
-    applyAppearance();
-    saveAppearance();
-  });
-});
-
-document.querySelectorAll(".color-choice").forEach(button => {
-  button.addEventListener("click", () => {
-    appearance.palette = button.dataset.palette;
-    applyAppearance();
-    saveAppearance();
-  });
-});
-
-document.querySelectorAll(".background-choice").forEach(button => {
-  button.addEventListener("click", () => {
-    appearance.background = button.dataset.background;
-    applyAppearance();
-    saveAppearance();
-  });
-});
-
-document.getElementById("resetAppearance").addEventListener("click", () => {
-  appearance = { ...defaultAppearance };
-  applyAppearance();
-  saveAppearance();
-});
-
-applyAppearance();
-
-/* ==================================
-   COMUNIDADES
-================================== */
-
-const STORAGE_KEY = "ermo-admin-communities";
-
-const initialCommunities = [
-  {
-    id: "imperiumz",
-    name: "IMPERIUMz",
-    slug: "imperiumz",
-    description: "Comunidade brasileira de Mobile Legends.",
-    logo: "",
-    site: "https://imperiumz.onrender.com",
-    status: "Ativa"
-  }
-];
-
-let communities = loadCommunities();
-
-
-  
 
 /* ==================================
    SUPABASE
@@ -1712,112 +1582,16 @@ const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_TkpO7ERPQySrZ1fZX2hkNg_qjR9afoZ
 
 const db = window.supabase.createClient(
   SUPABASE_URL,
-  SUPABASE_PUBLISHABLE_KEY
+  SUPABASE_PUBLISHABLE_KEY,
+  {
+    auth: {
+      flowType: "pkce",
+      detectSessionInUrl: true,
+      persistSession: true,
+      autoRefreshToken: true
+    }
+  }
 );
-
-let communities = [];
-let optionalColumns = {
-  slug: false,
-  active: false,
-  logo_url: false
-};
-
-/* ==================================
-   AUTENTICAÇÃO
-================================== */
-
-const loginScreen = document.getElementById("loginScreen");
-const loginForm = document.getElementById("loginForm");
-const loginButton = document.getElementById("loginButton");
-const loginError = document.getElementById("loginError");
-
-function showLogin() {
-  loginScreen.style.display = "flex";
-  document.querySelector(".app").style.display = "none";
-}
-
-function showAdmin() {
-  loginScreen.style.display = "none";
-  document.querySelector(".app").style.display = "flex";
-}
-
-loginForm.addEventListener("submit", async event => {
-  event.preventDefault();
-
-  loginButton.disabled = true;
-  loginButton.textContent = "Entrando...";
-  loginError.textContent = "";
-
-  const email = document.getElementById("loginEmail").value.trim();
-  const password = document.getElementById("loginPassword").value;
-
-  const { error } = await db.auth.signInWithPassword({
-    email,
-    password
-  });
-
-  loginButton.disabled = false;
-  loginButton.textContent = "Entrar na administração";
-
-  if (error) {
-    loginError.textContent = "Não foi possível entrar. Confira seu e-mail e sua senha.";
-    return;
-  }
-
-  await initializeAdmin();
-});
-
-async function logoutAdmin() {
-  const { error } = await db.auth.signOut();
-
-  if (error) {
-    alert("Não foi possível sair: " + error.message);
-    return;
-  }
-
-  showLogin();
-}
-
-async function initializeAdmin() {
-  const { data: { user }, error } = await db.auth.getUser();
-
-  if (error || !user) {
-    showLogin();
-    return;
-  }
-
-  showAdmin();
-
-  document.querySelector(".profile-name").textContent =
-    user.email || "Administrador";
-
-  await detectColumns();
-  await loadCommunities();
-  render();
-}
-
-db.auth.onAuthStateChange((event, session) => {
-  if (event === "SIGNED_OUT" || !session) {
-    showLogin();
-  }
-});
-
-/* ==================================
-   DETECTAR COLUNAS DISPONÍVEIS
-================================== */
-
-async function detectColumns() {
-  const columns = ["slug", "active", "logo_url"];
-
-  for (const column of columns) {
-    const { error } = await db
-      .from("communities")
-      .select(column)
-      .limit(1);
-
-    optionalColumns[column] = !error;
-  }
-}
 
 /* ==================================
    APARÊNCIA
@@ -1852,21 +1626,15 @@ function applyAppearance() {
   document.body.classList.toggle("dark", appearance.theme === "dark");
 
   document.body.classList.remove(
-    "palette-ermo",
-    "palette-ocean",
-    "palette-forest",
-    "palette-purple",
-    "palette-gold",
-    "palette-graphite"
+    "palette-ermo", "palette-ocean", "palette-forest",
+    "palette-purple", "palette-gold", "palette-graphite"
   );
 
   document.body.classList.add("palette-" + appearance.palette);
 
   document.body.classList.remove(
-    "pattern-grid",
-    "pattern-dots",
-    "pattern-diagonal",
-    "pattern-gradient"
+    "pattern-grid", "pattern-dots",
+    "pattern-diagonal", "pattern-gradient"
   );
 
   if (appearance.background !== "none") {
@@ -1932,8 +1700,299 @@ document.getElementById("resetAppearance").addEventListener("click", () => {
 applyAppearance();
 
 /* ==================================
-   COMUNIDADES - SUPABASE
+   ELEMENTOS DE AUTENTICAÇÃO
 ================================== */
+
+const loginScreen = document.getElementById("loginScreen");
+const loginForm = document.getElementById("loginForm");
+const loginButton = document.getElementById("loginButton");
+const loginError = document.getElementById("loginError");
+
+function showLogin() {
+  loginScreen.style.display = "flex";
+  document.querySelector(".app").style.display = "none";
+}
+
+function showAdmin() {
+  loginScreen.style.display = "none";
+  document.querySelector(".app").style.display = "flex";
+}
+
+/* Botão para solicitar recuperação */
+
+const forgotButton = document.createElement("button");
+forgotButton.type = "button";
+forgotButton.textContent = "Esqueci minha senha";
+forgotButton.style.cssText = `
+  display:block;
+  width:100%;
+  margin-top:15px;
+  border:0;
+  background:transparent;
+  color:#8f1812;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+`;
+
+loginForm.insertBefore(forgotButton, loginError);
+
+/* ==================================
+   TELA DE NOVA SENHA
+================================== */
+
+const recoveryScreen = document.createElement("div");
+
+recoveryScreen.id = "recoveryScreen";
+recoveryScreen.style.cssText = `
+  position:fixed;
+  inset:0;
+  z-index:1001;
+  background:#292622;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+`;
+
+recoveryScreen.innerHTML = `
+  <form id="recoveryForm" style="
+    width:100%;
+    max-width:390px;
+    background:white;
+    color:#302c28;
+    padding:30px;
+    border-radius:14px;
+    font-family:'DM Sans',sans-serif;
+  ">
+    <div style="
+      font-family:'Barlow Condensed';
+      font-size:34px;
+      font-weight:800;
+    ">ERMO</div>
+
+    <p style="
+      font-size:11px;
+      color:#888;
+      margin-bottom:25px;
+    ">RECUPERAÇÃO DE ACESSO</p>
+
+    <h2 style="
+      font-family:'Barlow Condensed';
+      font-size:27px;
+      margin-bottom:20px;
+    ">Criar nova senha</h2>
+
+    <div class="form-group">
+      <label>Nova senha</label>
+      <input
+        id="newPassword"
+        type="password"
+        minlength="8"
+        required
+        autocomplete="new-password"
+        placeholder="Digite sua nova senha"
+      >
+    </div>
+
+    <div class="form-group">
+      <label>Confirmar senha</label>
+      <input
+        id="confirmPassword"
+        type="password"
+        minlength="8"
+        required
+        autocomplete="new-password"
+        placeholder="Digite novamente"
+      >
+    </div>
+
+    <p id="recoveryError" style="
+      color:#b52b25;
+      font-size:11px;
+      margin-bottom:12px;
+    "></p>
+
+    <button
+      id="recoveryButton"
+      type="submit"
+      class="btn btn-primary"
+      style="width:100%"
+    >Salvar nova senha</button>
+  </form>
+`;
+
+document.body.appendChild(recoveryScreen);
+
+const recoveryForm = document.getElementById("recoveryForm");
+const recoveryError = document.getElementById("recoveryError");
+const recoveryButton = document.getElementById("recoveryButton");
+
+function showRecovery() {
+  loginScreen.style.display = "none";
+  document.querySelector(".app").style.display = "none";
+  recoveryScreen.style.display = "flex";
+}
+
+function hideRecovery() {
+  recoveryScreen.style.display = "none";
+}
+
+recoveryForm.addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const password = document.getElementById("newPassword").value;
+  const confirmation = document.getElementById("confirmPassword").value;
+
+  recoveryError.textContent = "";
+
+  if (password.length < 8) {
+    recoveryError.textContent = "A senha precisa ter pelo menos 8 caracteres.";
+    return;
+  }
+
+  if (password !== confirmation) {
+    recoveryError.textContent = "As senhas não são iguais.";
+    return;
+  }
+
+  recoveryButton.disabled = true;
+  recoveryButton.textContent = "Salvando...";
+
+  const { error } = await db.auth.updateUser({
+    password: password
+  });
+
+  recoveryButton.disabled = false;
+  recoveryButton.textContent = "Salvar nova senha";
+
+  if (error) {
+    recoveryError.textContent = "Erro: " + error.message;
+    return;
+  }
+
+  alert("Senha atualizada com sucesso! Entre novamente com sua nova senha.");
+
+  hideRecovery();
+
+  await db.auth.signOut();
+  showLogin();
+
+  recoveryForm.reset();
+});
+
+/* ==================================
+   SOLICITAR RECUPERAÇÃO
+================================== */
+
+forgotButton.addEventListener("click", async () => {
+  const email = document.getElementById("loginEmail").value.trim();
+
+  if (!email) {
+    loginError.textContent = "Digite seu e-mail primeiro.";
+    return;
+  }
+
+  forgotButton.disabled = true;
+  forgotButton.textContent = "Enviando...";
+
+  const { error } = await db.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + window.location.pathname
+  });
+
+  forgotButton.disabled = false;
+  forgotButton.textContent = "Esqueci minha senha";
+
+  if (error) {
+    loginError.textContent = "Erro ao enviar: " + error.message;
+    return;
+  }
+
+  alert("Enviamos um novo link de recuperação para seu e-mail.");
+});
+
+/* ==================================
+   LOGIN
+================================== */
+
+loginForm.addEventListener("submit", async event => {
+  event.preventDefault();
+
+  loginButton.disabled = true;
+  loginButton.textContent = "Entrando...";
+  loginError.textContent = "";
+
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value;
+
+  const { error } = await db.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  loginButton.disabled = false;
+  loginButton.textContent = "Entrar na administração";
+
+  if (error) {
+    loginError.textContent = "Falha no login: " + error.message;
+    return;
+  }
+
+  await initializeAdmin();
+});
+
+async function logoutAdmin() {
+  const { error } = await db.auth.signOut();
+
+  if (error) {
+    alert("Não foi possível sair: " + error.message);
+    return;
+  }
+
+  showLogin();
+}
+
+/* ==================================
+   EVENTOS DE AUTENTICAÇÃO
+================================== */
+
+db.auth.onAuthStateChange((event, session) => {
+  if (event === "PASSWORD_RECOVERY") {
+    showRecovery();
+  }
+
+  if (event === "SIGNED_OUT") {
+    hideRecovery();
+    showLogin();
+  }
+});
+
+/* ==================================
+   COLUNAS DO BANCO
+================================== */
+
+let optionalColumns = {
+  slug: false,
+  active: false,
+  logo_url: false
+};
+
+async function detectColumns() {
+  for (const column of ["slug", "active", "logo_url"]) {
+    const { error } = await db
+      .from("communities")
+      .select(column)
+      .limit(1);
+
+    optionalColumns[column] = !error;
+  }
+}
+
+/* ==================================
+   COMUNIDADES
+================================== */
+
+let communities = [];
 
 function formatNumber(number) {
   return String(number).padStart(2, "0");
@@ -1968,27 +2027,23 @@ function normalizeCommunity(row) {
 }
 
 async function loadCommunities() {
-  const { data, error } = await db
+  let result = await db
     .from("communities")
     .select("*")
     .order("created_at", { ascending: false });
 
-  if (error) {
-    // Compatibilidade caso a coluna created_at ainda não exista.
-    const fallback = await db
+  if (result.error) {
+    result = await db
       .from("communities")
       .select("*");
+  }
 
-    if (fallback.error) {
-      alert("Erro ao carregar comunidades: " + fallback.error.message);
-      return;
-    }
-
-    communities = (fallback.data || []).map(normalizeCommunity);
+  if (result.error) {
+    alert("Erro ao carregar comunidades: " + result.error.message);
     return;
   }
 
-  communities = (data || []).map(normalizeCommunity);
+  communities = (result.data || []).map(normalizeCommunity);
 }
 
 function logoHTML(community) {
@@ -2030,6 +2085,7 @@ function renderDashboard() {
           <p>Nenhuma comunidade cadastrada.</p>
         </div>
       </td></tr>`;
+    lucide.createIcons();
     return;
   }
 
@@ -2076,6 +2132,7 @@ function renderCommunities(filter = "") {
           <p>Nenhuma comunidade encontrada.</p>
         </div>
       </td></tr>`;
+    lucide.createIcons();
     return;
   }
 
@@ -2127,6 +2184,7 @@ function renderAddresses() {
           <p>Nenhum endereço cadastrado.</p>
         </div>
       </td></tr>`;
+    lucide.createIcons();
     return;
   }
 
@@ -2143,6 +2201,30 @@ function renderAddresses() {
       <td><span class="pill">${escapeHTML(c.status)}</span></td>
     </tr>
   `).join("");
+
+  lucide.createIcons();
+}
+
+/* ==================================
+   INICIALIZAÇÃO DO ADMIN
+================================== */
+
+async function initializeAdmin() {
+  const { data: { user }, error } = await db.auth.getUser();
+
+  if (error || !user) {
+    showLogin();
+    return;
+  }
+
+  showAdmin();
+
+  document.querySelector(".profile-name").textContent =
+    user.email || "Administrador";
+
+  await detectColumns();
+  await loadCommunities();
+  render();
 }
 
 /* ==================================
@@ -2173,7 +2255,7 @@ document.getElementById("mobileMenu").addEventListener("click", () => {
 });
 
 /* ==================================
-   MODAL
+   MODAL DE COMUNIDADE
 ================================== */
 
 function openModal() {
@@ -2240,20 +2322,20 @@ document.getElementById("communityForm").addEventListener("submit", async event 
     return;
   }
 
+  const existing = communities.find(c => String(c.id) === String(editId));
+
   const payload = {
     name,
-    category: communities.find(c => String(c.id) === String(editId))?.category || "Geral",
+    category: existing?.category || "Geral",
     description,
     website_url: site
   };
 
   if (optionalColumns.slug) payload.slug = slug;
   if (optionalColumns.logo_url) payload.logo_url = logo;
-
-  if (optionalColumns.active) {
-    const existing = communities.find(c => String(c.id) === String(editId));
-    payload.active = existing ? existing.status === "Ativa" : true;
-  }
+  if (optionalColumns.active) payload.active = existing
+    ? existing.status === "Ativa"
+    : true;
 
   submitButton.disabled = true;
   submitButton.textContent = "Salvando...";
@@ -2261,14 +2343,11 @@ document.getElementById("communityForm").addEventListener("submit", async event 
   let result;
 
   if (editId) {
-    result = await db
-      .from("communities")
+    result = await db.from("communities")
       .update(payload)
       .eq("id", editId);
   } else {
-    result = await db
-      .from("communities")
-      .insert(payload);
+    result = await db.from("communities").insert(payload);
   }
 
   submitButton.disabled = false;
@@ -2276,7 +2355,7 @@ document.getElementById("communityForm").addEventListener("submit", async event 
   lucide.createIcons();
 
   if (result.error) {
-    alert("Não foi possível salvar a comunidade:\n" + result.error.message);
+    alert("Não foi possível salvar:\n" + result.error.message);
     return;
   }
 
@@ -2334,15 +2413,24 @@ document.getElementById("communityModal").addEventListener("click", event => {
 showLogin();
 
 (async () => {
-  const { data: { session } } = await db.auth.getSession();
+  const { data: { session }, error } = await db.auth.getSession();
+
+  if (error) {
+    console.error("Erro ao verificar sessão:", error.message);
+    showLogin();
+    return;
+  }
 
   if (session) {
     await initializeAdmin();
+  } else {
+    showLogin();
   }
 })();
 
 lucide.createIcons();
 
+  
 </script>
 
 </body>
