@@ -1033,8 +1033,21 @@ td {
       <input id="loginPassword" type="password" required placeholder="Sua senha">
     </div>
 
-    <p id="loginError" style="font-size:11px;color:#b52b25;margin-bottom:12px"></p>
+<button type="button" id="forgotButton" style="
+  display:block;
+  width:100%;
+  margin:12px 0;
+  border:0;
+  background:transparent;
+  color:#8f1812;
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer;
+">
+  Esqueci minha senha
+</button>
 
+<p id="loginError" style="font-size:11px;color:#b52b25;margin-bottom:12px"></p>
     <button class="btn btn-primary" id="loginButton" type="submit" style="width:100%">
       Entrar na administração
     </button>
@@ -1577,7 +1590,7 @@ td {
    SUPABASE
 ================================== */
 
-const SUPABASE_URL = "https://dgcwrxrgeobwduynoyod.supabase.co";
+const SUPABASE_URL = "https://dgcwrxrgeobwduynoy.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_TkpO7ERPQySrZ1fZX2hkNg_qjR9afoZ";
 
 const db = window.supabase.createClient(
@@ -1720,22 +1733,7 @@ function showAdmin() {
 
 /* Botão para solicitar recuperação */
 
-const forgotButton = document.createElement("button");
-forgotButton.type = "button";
-forgotButton.textContent = "Esqueci minha senha";
-forgotButton.style.cssText = `
-  display:block;
-  width:100%;
-  margin-top:15px;
-  border:0;
-  background:transparent;
-  color:#8f1812;
-  font-size:12px;
-  font-weight:700;
-  cursor:pointer;
-`;
-
-loginForm.insertBefore(forgotButton, loginError);
+const forgotButton = document.getElementById("forgotButton");
 
 /* ==================================
    TELA DE NOVA SENHA
