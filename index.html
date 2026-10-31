@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#292622">
-<title>ERMO | Administração</title>
+<title> ACEN | Administração</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -142,7 +142,7 @@ body.dark .preview-card {
 
 /* PALETAS */
 
-body.palette-ermo { --primary:#8f1812; --primary-hover:#74130f; }
+body.palette-acen { --primary:#8f1812; --primary-hover:#74130f; }
 body.palette-ocean { --primary:#256b83; --primary-hover:#194e61; }
 body.palette-forest { --primary:#357451; --primary-hover:#245b3d; }
 body.palette-purple { --primary:#7653a6; --primary-hover:#5b3c87; }
@@ -992,7 +992,7 @@ td {
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
-<body class="palette-ermo">
+<body class="palette-acen">
 <div id="loginScreen" style="
   position:fixed;
   inset:0;
@@ -1013,7 +1013,7 @@ td {
     font-family:'DM Sans',sans-serif;
   ">
     <div style="font-family:'Barlow Condensed';font-size:34px;font-weight:800">
-      ERMO
+      ACEN
     </div>
     <p style="font-size:11px;color:#888;margin-bottom:25px">
       ADMINISTRATION · ACESSO RESTRITO
@@ -1044,9 +1044,9 @@ td {
 
 <aside class="sidebar" id="sidebar">
   <div class="brand">
-    <div class="brand-icon">E</div>
+    <div class="brand-icon">A</div>
     <div>
-      <div class="brand-name">ERMO</div>
+      <div class="brand-name">ACEN</div>
       <div class="brand-sub">Administration</div>
     </div>
   </div>
@@ -1102,7 +1102,7 @@ td {
       </div>
       <div>
         <div class="profile-name">Administrador</div>
-        <div class="profile-role">Painel ERMO</div>
+        <div class="profile-role">Painel ACEN</div>
       </div>
     </div>
   </div>
@@ -1115,7 +1115,7 @@ td {
     <button class="top-icon mobile-menu" id="mobileMenu">
       <i data-lucide="menu"></i>
     </button>
-    <span class="page-location">ERMO / Administração</span>
+    <span class="page-location">ACEN / Administração</span>
   </div>
 
   <div class="top-right">
@@ -1141,7 +1141,7 @@ td {
   <div class="page-heading">
     <div>
       <h1>Dashboard</h1>
-      <p>Visão geral da plataforma ERMO.</p>
+      <p>Visão geral da plataforma ACEN.</p>
     </div>
 
     <button class="btn btn-primary" onclick="openModal()">
@@ -1181,7 +1181,7 @@ td {
     <div class="stat-card">
       <div class="stat-top">
         <div class="stat-icon"><i data-lucide="layers"></i></div>
-        <span class="stat-note">ERMO</span>
+        <span class="stat-note">ACEN</span>
       </div>
       <h2>1.1</h2>
       <p>Versão do painel</p>
@@ -1223,7 +1223,7 @@ td {
   <div class="page-heading">
     <div>
       <h1>Comunidades</h1>
-      <p>Adicione e gerencie as comunidades do ERMO.</p>
+      <p>Adicione e gerencie as comunidades do ACEN.</p>
     </div>
 
     <button class="btn btn-primary" onclick="openModal()">
@@ -1285,7 +1285,7 @@ td {
       <table>
         <thead>
           <tr>
-            <th>Endereço ERMO</th>
+            <th>Endereço ACEN</th>
             <th>Comunidade</th>
             <th>Destino</th>
             <th>Status</th>
@@ -1297,7 +1297,7 @@ td {
   </div>
 
   <div style="margin-top:18px;padding:17px;background:#fff8e9;border:1px solid #eadbb9;border-radius:10px;font-size:11px;color:#806b43;line-height:1.7">
-    <strong>Importante:</strong> os endereços .ermo são identificadores internos nesta versão. Para funcionarem diretamente na barra do navegador como domínios públicos, será necessária infraestrutura DNS e uma extensão reconhecida.
+    <strong>Importante:</strong> os endereços .ACEN são identificadores internos nesta versão. Para funcionarem diretamente na barra do navegador como domínios públicos, será necessária infraestrutura DNS e uma extensão reconhecida.
   </div>
 </section>
 
@@ -1355,14 +1355,14 @@ td {
 
       <div class="settings-grid colors">
 
-        <button class="settings-option color-choice" data-palette="ermo">
+        <button class="settings-option color-choice" data-palette="acen">
           <span class="selected-check"><i data-lucide="check"></i></span>
           <div class="color-preview">
             <span style="background:#8f1812"></span>
             <span style="background:#b44b38"></span>
             <span style="background:#d9a66c"></span>
           </div>
-          <span class="option-name">ERMO</span>
+          <span class="option-name">ACEN</span>
           <span class="option-description">Vermelho e terroso.</span>
         </button>
 
@@ -1489,7 +1489,7 @@ td {
     <div style="padding:24px">
       <div class="form-group">
         <label>Nome da plataforma</label>
-        <input value="ERMO" disabled>
+        <input value="ACEN" disabled>
       </div>
 
       <div class="form-group">
@@ -1535,9 +1535,9 @@ td {
       </div>
 
       <div class="form-group">
-        <label>Identificador ERMO *</label>
+        <label>Identificador ACEN *</label>
         <input id="communitySlug" placeholder="Ex: imperiumz" required>
-        <div class="form-hint">Será exibido como imperiumz.ermo.</div>
+        <div class="form-hint">Será exibido como imperiumz.acen.</div>
       </div>
 
       <div class="form-group">
@@ -1597,11 +1597,11 @@ const db = window.supabase.createClient(
    APARÊNCIA
 ================================== */
 
-const APPEARANCE_KEY = "ermo-admin-appearance";
+const APPEARANCE_KEY = "acen-admin-appearance";
 
 const defaultAppearance = {
   theme: "light",
-  palette: "ermo",
+  palette: "acen",
   background: "none"
 };
 
@@ -1626,7 +1626,7 @@ function applyAppearance() {
   document.body.classList.toggle("dark", appearance.theme === "dark");
 
   document.body.classList.remove(
-    "palette-ermo", "palette-ocean", "palette-forest",
+    "palette-acen", "palette-ocean", "palette-forest",
     "palette-purple", "palette-gold", "palette-graphite"
   );
 
@@ -1769,7 +1769,7 @@ recoveryScreen.innerHTML = `
       font-family:'Barlow Condensed';
       font-size:34px;
       font-weight:800;
-    ">ERMO</div>
+    ">ACEN</div>
 
     <p style="
       font-size:11px;
@@ -2100,7 +2100,7 @@ function renderDashboard() {
           </div>
         </div>
       </td>
-      <td>${escapeHTML(c.slug)}.ermo</td>
+      <td>${escapeHTML(c.slug)}.acen</td>
       <td><span class="pill">${escapeHTML(c.status)}</span></td>
       <td>
         <div class="actions">
@@ -2147,7 +2147,7 @@ function renderCommunities(filter = "") {
           </div>
         </div>
       </td>
-      <td>${escapeHTML(c.slug)}.ermo</td>
+      <td>${escapeHTML(c.slug)}.acen</td>
       <td>
         <a href="${escapeHTML(c.site)}" target="_blank" rel="noopener noreferrer"
           style="color:var(--primary);font-weight:700;text-decoration:none">
@@ -2190,7 +2190,7 @@ function renderAddresses() {
 
   tbody.innerHTML = communities.map(c => `
     <tr>
-      <td><strong>${escapeHTML(c.slug)}.ermo</strong></td>
+      <td><strong>${escapeHTML(c.slug)}.acen</strong></td>
       <td>${escapeHTML(c.name)}</td>
       <td>
         <a href="${escapeHTML(c.site)}" target="_blank" rel="noopener noreferrer"
@@ -2432,7 +2432,7 @@ lucide.createIcons();
 
 
 /* ==========================================
-   ERMO ADM — MÓDULO DE POSTAGENS
+   ACEN ADM — MÓDULO DE POSTAGENS
 ========================================== */
 
 /* ESTILOS */
@@ -2588,13 +2588,13 @@ postsPage.innerHTML = `
   <div class="page-heading">
     <div>
       <h1>Postagens</h1>
-      <p>Gerencie os vídeos e publicações das comunidades ERMO.</p>
+      <p>Gerencie os vídeos e publicações das comunidades ACEN.</p>
     </div>
   </div>
 
   <div class="panel posts-form-panel">
     <h3 id="postFormTitle">Adicionar publicação</h3>
-    <p>Cadastre um vídeo para exibição na página pública do ERMO.</p>
+    <p>Cadastre um vídeo para exibição na página pública do ACEN.</p>
 
     <form id="postForm">
 
