@@ -2430,6 +2430,759 @@ showLogin();
 
 lucide.createIcons();
 
+
+/* ==========================================
+   ERMO ADM — MÓDULO DE POSTAGENS
+========================================== */
+
+/* ESTILOS */
+
+const postsStyles = document.createElement("style");
+
+postsStyles.textContent = `
+  .posts-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .posts-form-grid .form-group {
+    margin-bottom: 0;
+  }
+
+  .posts-form-grid .full {
+    grid-column: 1 / -1;
+  }
+
+  .posts-form-grid select,
+  .posts-form-grid input,
+  .posts-form-grid textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    outline: none;
+    font-size: 12px;
+    background: var(--input);
+    color: var(--text);
+  }
+
+  .posts-form-grid select:focus,
+  .posts-form-grid input:focus,
+  .posts-form-grid textarea:focus {
+    border-color: var(--primary);
+  }
+
+  .post-platform {
+    display: inline-flex;
+    padding: 5px 9px;
+    border-radius: 20px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 10px;
+    font-weight: 800;
+  }
+
+  .post-inactive {
+    color: #b7791f;
+    background: #fff4dc;
+  }
+
+  body.dark .post-inactive {
+    background: #49391f;
+    color: #f2c879;
+  }
+
+  .post-title {
+    font-weight: 800;
+    max-width: 230px;
+  }
+
+  .post-description {
+    color: var(--muted);
+    font-size: 10px;
+    margin-top: 4px;
+    max-width: 230px;
+    overflow-wrap: anywhere;
+  }
+
+  .post-link {
+    color: var(--primary);
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .post-link:hover {
+    text-decoration: underline;
+  }
+
+  .posts-form-panel {
+    padding: 22px;
+    margin-bottom: 20px;
+  }
+
+  .posts-form-panel h3 {
+    font-size: 14px;
+    margin-bottom: 5px;
+  }
+
+  .posts-form-panel > p {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  .posts-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 9px;
+    margin-top: 18px;
+    flex-wrap: wrap;
+  }
+
+  .posts-message {
+    font-size: 11px;
+    margin-top: 12px;
+    color: var(--muted);
+  }
+
+  @media(max-width: 600px) {
+    .posts-form-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .posts-form-grid .full {
+      grid-column: auto;
+    }
+  }
+`;
+
+document.head.appendChild(postsStyles);
+
+
+/* NAVEGAÇÃO */
+
+const postsNavButton = document.createElement("button");
+
+postsNavButton.dataset.page = "posts";
+postsNavButton.innerHTML = `
+  <i data-lucide="video"></i>
+  Postagens
+`;
+
+document.querySelector(".nav").appendChild(postsNavButton);
+
+postsNavButton.addEventListener("click", () => {
+  showPage("posts");
+});
+
+
+/* PÁGINA DE POSTAGENS */
+
+const postsPage = document.createElement("section");
+
+postsPage.className = "page";
+postsPage.id = "posts";
+
+postsPage.innerHTML = `
+  <div class="page-heading">
+    <div>
+      <h1>Postagens</h1>
+      <p>Gerencie os vídeos e publicações das comunidades ERMO.</p>
+    </div>
+  </div>
+
+  <div class="panel posts-form-panel">
+    <h3 id="postFormTitle">Adicionar publicação</h3>
+    <p>Cadastre um vídeo para exibição na página pública do ERMO.</p>
+
+    <form id="postForm">
+
+      <input type="hidden" id="postEditId">
+
+      <div class="posts-form-grid">
+
+        <div class="form-group">
+          <label>Comunidade *</label>
+          <select id="postCommunity" required>
+            <option value="">Selecione uma comunidade</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Plataforma *</label>
+          <select id="postPlatform" required>
+            <option value="youtube">YouTube</option>
+            <option value="tiktok">TikTok</option>
+          </select>
+        </div>
+
+        <div class="form-group full">
+          <label>Título *</label>
+          <input
+            id="postTitle"
+            maxlength="120"
+            required
+            placeholder="Ex: Novo vídeo da comunidade"
+          >
+        </div>
+
+        <div class="form-group full">
+          <label>Descrição</label>
+          <textarea
+            id="postDescription"
+            maxlength="1000"
+            placeholder="Escreva uma breve descrição..."
+          ></textarea>
+        </div>
+
+        <div class="form-group full">
+          <label>Link do vídeo *</label>
+          <input
+            id="postUrl"
+            type="url"
+            required
+            placeholder="https://www.youtube.com/... ou https://www.tiktok.com/..."
+          >
+          <div class="form-hint">
+            Cole o endereço original do vídeo.
+          </div>
+        </div>
+
+      </div>
+
+      <div id="postFormMessage" class="posts-message"></div>
+
+      <div class="posts-form-actions">
+        <button
+          type="button"
+          class="btn btn-light"
+          id="cancelPostEdit"
+          style="display:none"
+        >
+          Cancelar edição
+        </button>
+
+        <button
+          type="submit"
+          class="btn btn-primary"
+          id="savePostButton"
+        >
+          <i data-lucide="plus"></i>
+          Publicar
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+  <div class="panel">
+
+    <div class="panel-header">
+      <div>
+        <h3>Publicações cadastradas</h3>
+        <p>Visualize e gerencie as publicações de todas as comunidades.</p>
+      </div>
+
+      <div class="search-box">
+        <i data-lucide="search"></i>
+        <input
+          id="postSearch"
+          placeholder="Buscar publicação..."
+        >
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Publicação</th>
+            <th>Comunidade</th>
+            <th>Plataforma</th>
+            <th>Status</th>
+            <th>Link</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+
+        <tbody id="postsTable"></tbody>
+      </table>
+    </div>
+
+  </div>
+`;
+
+document.querySelector(".content").appendChild(postsPage);
+
+
+/* ELEMENTOS */
+
+const postForm = document.getElementById("postForm");
+const postCommunity = document.getElementById("postCommunity");
+const postPlatform = document.getElementById("postPlatform");
+const postTitle = document.getElementById("postTitle");
+const postDescription = document.getElementById("postDescription");
+const postUrl = document.getElementById("postUrl");
+const postEditId = document.getElementById("postEditId");
+const postsTable = document.getElementById("postsTable");
+const postSearch = document.getElementById("postSearch");
+const postFormTitle = document.getElementById("postFormTitle");
+const postFormMessage = document.getElementById("postFormMessage");
+const savePostButton = document.getElementById("savePostButton");
+const cancelPostEdit = document.getElementById("cancelPostEdit");
+
+let posts = [];
+
+
+/* COMUNIDADES NO SELECT */
+
+function renderPostCommunities() {
+  const previousValue = postCommunity.value;
+
+  postCommunity.innerHTML = `
+    <option value="">Selecione uma comunidade</option>
+  `;
+
+  communities.forEach(community => {
+    const option = document.createElement("option");
+
+    option.value = community.slug;
+    option.textContent = community.name;
+
+    postCommunity.appendChild(option);
+  });
+
+  if (communities.some(c => c.slug === previousValue)) {
+    postCommunity.value = previousValue;
+  }
+}
+
+
+/* CARREGAR POSTAGENS */
+
+async function loadPosts() {
+  const { data, error } = await db
+    .from("posts")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Erro ao carregar postagens:", error.message);
+
+    postsTable.innerHTML = `
+      <tr>
+        <td colspan="6">
+          <div class="empty">
+            <p>Não foi possível carregar as postagens.</p>
+            <p>${escapeHTML(error.message)}</p>
+          </div>
+        </td>
+      </tr>
+    `;
+
+    return;
+  }
+
+  posts = data || [];
+
+  renderPosts();
+}
+
+
+/* RENDERIZAR POSTAGENS */
+
+function renderPosts(filter = "") {
+  const filtered = posts.filter(post => {
+    const community = communities.find(
+      c => c.slug === post.community_slug
+    );
+
+    const communityName = community?.name || post.community_slug || "";
+
+    const text = [
+      post.title,
+      post.description,
+      communityName,
+      post.platform
+    ].join(" ").toLowerCase();
+
+    return text.includes(filter.toLowerCase());
+  });
+
+  if (!filtered.length) {
+    postsTable.innerHTML = `
+      <tr>
+        <td colspan="6">
+          <div class="empty">
+            <i data-lucide="video-off"></i>
+            <p>Nenhuma publicação encontrada.</p>
+          </div>
+        </td>
+      </tr>
+    `;
+
+    lucide.createIcons();
+    return;
+  }
+
+  postsTable.innerHTML = filtered.map(post => {
+    const community = communities.find(
+      c => c.slug === post.community_slug
+    );
+
+    const communityName = community?.name || post.community_slug || "Comunidade removida";
+
+    const platformName =
+      post.platform === "youtube" ? "YouTube" : "TikTok";
+
+    const status = post.active
+      ? `<span class="pill">Ativa</span>`
+      : `<span class="pill post-inactive">Oculta</span>`;
+
+    return `
+      <tr>
+
+        <td>
+          <div class="post-title">
+            ${escapeHTML(post.title)}
+          </div>
+
+          <div class="post-description">
+            ${escapeHTML(post.description || "Sem descrição")}
+          </div>
+        </td>
+
+        <td>
+          ${escapeHTML(communityName)}
+        </td>
+
+        <td>
+          <span class="post-platform">
+            ${platformName}
+          </span>
+        </td>
+
+        <td>${status}</td>
+
+        <td>
+          <a
+            class="post-link"
+            href="${escapeHTML(post.video_url)}"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Abrir vídeo ↗
+          </a>
+        </td>
+
+        <td>
+          <div class="actions">
+
+            <button
+              class="action-btn"
+              onclick="editPost('${escapeHTML(post.id)}')"
+              title="Editar"
+            >
+              <i data-lucide="pencil"></i>
+            </button>
+
+            <button
+              class="action-btn"
+              onclick="togglePost('${escapeHTML(post.id)}')"
+              title="${post.active ? "Ocultar" : "Publicar"}"
+            >
+              <i data-lucide="${post.active ? "eye-off" : "eye"}"></i>
+            </button>
+
+            <button
+              class="action-btn"
+              onclick="deletePost('${escapeHTML(post.id)}')"
+              title="Excluir"
+            >
+              <i data-lucide="trash-2"></i>
+            </button>
+
+          </div>
+        </td>
+
+      </tr>
+    `;
+  }).join("");
+
+  lucide.createIcons();
+}
+
+
+/* VALIDAR LINK */
+
+function validatePostUrl(url, platform) {
+  try {
+    const parsed = new URL(url);
+
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+      return false;
+    }
+
+    const host = parsed.hostname.toLowerCase();
+
+    if (platform === "youtube") {
+      return [
+        "youtube.com",
+        "www.youtube.com",
+        "m.youtube.com",
+        "youtu.be",
+        "www.youtu.be"
+      ].includes(host);
+    }
+
+    if (platform === "tiktok") {
+      return [
+        "tiktok.com",
+        "www.tiktok.com",
+        "m.tiktok.com",
+        "vm.tiktok.com"
+      ].includes(host);
+    }
+
+    return false;
+
+  } catch {
+    return false;
+  }
+}
+
+
+/* LIMPAR FORMULÁRIO */
+
+function resetPostForm() {
+  postForm.reset();
+
+  postEditId.value = "";
+
+  postFormTitle.textContent = "Adicionar publicação";
+
+  savePostButton.innerHTML = `
+    <i data-lucide="plus"></i>
+    Publicar
+  `;
+
+  cancelPostEdit.style.display = "none";
+
+  postFormMessage.textContent = "";
+
+  lucide.createIcons();
+}
+
+cancelPostEdit.addEventListener("click", resetPostForm);
+
+
+/* CADASTRAR E EDITAR */
+
+postForm.addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const id = postEditId.value;
+  const communitySlug = postCommunity.value;
+  const platform = postPlatform.value;
+  const title = postTitle.value.trim();
+  const description = postDescription.value.trim();
+  const videoUrl = postUrl.value.trim();
+
+  if (!communitySlug || !title || !videoUrl) {
+    postFormMessage.textContent = "Preencha todos os campos obrigatórios.";
+    return;
+  }
+
+  if (!validatePostUrl(videoUrl, platform)) {
+    postFormMessage.textContent =
+      "O link não parece pertencer à plataforma selecionada.";
+    return;
+  }
+
+  const payload = {
+    community_slug: communitySlug,
+    platform,
+    title,
+    description,
+    video_url: videoUrl
+  };
+
+  savePostButton.disabled = true;
+  savePostButton.textContent = "Salvando...";
+
+  let result;
+
+  if (id) {
+    result = await db
+      .from("posts")
+      .update(payload)
+      .eq("id", id);
+  } else {
+    result = await db
+      .from("posts")
+      .insert({
+        ...payload,
+        active: true
+      });
+  }
+
+  savePostButton.disabled = false;
+
+  if (result.error) {
+    postFormMessage.textContent =
+      "Erro ao salvar: " + result.error.message;
+
+    savePostButton.innerHTML = `
+      <i data-lucide="save"></i>
+      Salvar publicação
+    `;
+
+    lucide.createIcons();
+    return;
+  }
+
+  resetPostForm();
+
+  await loadPosts();
+
+  alert(id
+    ? "Publicação atualizada com sucesso!"
+    : "Publicação cadastrada com sucesso!"
+  );
+});
+
+
+/* EDITAR */
+
+function editPost(id) {
+  const post = posts.find(p => String(p.id) === String(id));
+
+  if (!post) return;
+
+  postEditId.value = post.id;
+  postCommunity.value = post.community_slug;
+  postPlatform.value = post.platform;
+  postTitle.value = post.title;
+  postDescription.value = post.description || "";
+  postUrl.value = post.video_url;
+
+  postFormTitle.textContent = "Editar publicação";
+
+  savePostButton.innerHTML = `
+    <i data-lucide="save"></i>
+    Salvar alterações
+  `;
+
+  cancelPostEdit.style.display = "inline-flex";
+
+  postFormMessage.textContent = "Editando publicação selecionada.";
+
+  showPage("posts");
+
+  postForm.scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
+
+  lucide.createIcons();
+}
+
+
+/* OCULTAR OU PUBLICAR */
+
+async function togglePost(id) {
+  const post = posts.find(p => String(p.id) === String(id));
+
+  if (!post) return;
+
+  const newStatus = !post.active;
+
+  const action = newStatus ? "publicar" : "ocultar";
+
+  if (!confirm(`Deseja realmente ${action} esta publicação?`)) {
+    return;
+  }
+
+  const { error } = await db
+    .from("posts")
+    .update({ active: newStatus })
+    .eq("id", id);
+
+  if (error) {
+    alert("Não foi possível alterar o status: " + error.message);
+    return;
+  }
+
+  await loadPosts();
+}
+
+
+/* EXCLUIR */
+
+async function deletePost(id) {
+  const post = posts.find(p => String(p.id) === String(id));
+
+  if (!post) return;
+
+  if (!confirm(`Deseja excluir permanentemente "${post.title}"?`)) {
+    return;
+  }
+
+  const { error } = await db
+    .from("posts")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    alert("Não foi possível excluir: " + error.message);
+    return;
+  }
+
+  if (postEditId.value === String(id)) {
+    resetPostForm();
+  }
+
+  await loadPosts();
+
+  alert("Publicação excluída.");
+}
+
+
+/* BUSCA */
+
+postSearch.addEventListener("input", event => {
+  renderPosts(event.target.value);
+});
+
+
+/* INTEGRAÇÃO COM A INICIALIZAÇÃO EXISTENTE */
+
+const originalInitializeAdmin = initializeAdmin;
+
+initializeAdmin = async function() {
+  await originalInitializeAdmin();
+
+  renderPostCommunities();
+
+  await loadPosts();
+};
+
+
+/* ATUALIZAR SELECT QUANDO COMUNIDADES MUDAM */
+
+const originalRender = render;
+
+render = function() {
+  originalRender();
+
+  renderPostCommunities();
+};
+
+
+/* FINALIZAÇÃO */
+
+lucide.createIcons();
   
 </script>
 

@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#10110f">
+<title>ERMO Network</title>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  background: #10110f;
+  color: #f2f0e9;
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  padding: 25px 7%;
+  border-bottom: 1px solid #292a25;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  font-size: 25px;
+  font-weight: 900;
+  letter-spacing: 2px;
+}
+
+.logo span {
+  color: #b8a477;
+}
+
+.status {
+  color: #9b9c91;
+  font-size: 12px;
+}
+
+main {
+  width: 90%;
+  max-width: 650px;
+  margin: auto;
+  padding: 65px 0;
+  text-align: center;
+}
+
+.tag {
+  color: #b8a477;
+  font-size: 11px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-bottom: 22px;
+}
+
+h1 {
+  font-size: clamp(38px, 8vw, 65px);
+  line-height: 1;
+  margin-bottom: 20px;
+}
+
+.description {
+  color: #a5a69d;
+  line-height: 1.7;
+  margin: 0 auto 38px;
+  max-width: 470px;
+}
+
+.search {
+  display: flex;
+  background: #1b1c18;
+  border: 1px solid #414239;
+  border-radius: 8px;
+  padding: 7px;
+  gap: 8px;
+}
+
+input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: white;
+  padding: 13px;
+  font-size: 15px;
+}
+
+input::placeholder {
+  color: #77786f;
+}
+
+button {
+  background: #b8a477;
+  color: #171711;
+  border: none;
+  border-radius: 5px;
+  padding: 0 22px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: .5;
+  cursor: wait;
+}
+
+.result {
+  display: none;
+  text-align: left;
+  background: #1b1c18;
+  border: 1px solid #414239;
+  border-radius: 8px;
+  padding: 22px;
+  margin-top: 20px;
+}
+
+.result h2 {
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+
+.result p {
+  color: #a5a69d;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.result a {
+  display: block;
+  margin-top: 18px;
+  background: #b8a477;
+  color: #171711;
+  padding: 14px;
+  text-align: center;
+  text-decoration: none;
+  font-weight: bold;
+  border-radius: 5px;
+}
+
+.message {
+  min-height: 25px;
+  margin-top: 18px;
+  color: #c6b98f;
+  font-size: 13px;
+}
+
+footer {
+  border-top: 1px solid #292a25;
+  padding: 22px;
+  text-align: center;
+  color: #77786f;
+  font-size: 11px;
+}
+
+@media(max-width: 480px) {
+  header {
+    padding: 20px 5%;
+  }
+
+  .search {
+    flex-direction: column;
+  }
+
+  button {
+    padding: 15px;
+  }
+}
+  .error-page {
+  display: none;
+  background: #1b1c18;
+  border: 1px solid #414239;
+  border-radius: 10px;
+  padding: 35px 20px;
+  margin-top: 25px;
+  text-align: center;
+}
+
+.error-code {
+  color: #b8a477;
+  font-size: 65px;
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+
+.error-page h2 {
+  font-size: 22px;
+  margin-bottom: 12px;
+}
+
+.error-page p {
+  color: #a5a69d;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.error-page a {
+  display: inline-block;
+  margin-top: 22px;
+  background: #b8a477;
+  color: #171711;
+  padding: 13px 22px;
+  border-radius: 5px;
+  text-decoration: none;
+  font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">ERMO<span>.</span></div>
+  <div class="status">NETWORK · BETA</div>
+</header>
+
+<main>
+  <div class="tag">Uma rede. Várias comunidades.</div>
+
+  <h1>Encontre seu<br>lugar na ERMO.</h1>
+
+  <p class="description">
+    Digite um endereço ERMO para localizar e acessar
+    uma comunidade da nossa rede.
+  </p>
+
+  <form class="search" id="resolverForm">
+    <input
+      id="address"
+      type="text"
+      placeholder="Ex.: imperiumz.ermo"
+      autocomplete="off"
+      required
+    >
+    <button id="resolveButton" type="submit">
+      Acessar
+    </button>
+  </form>
+
+  <div class="message" id="message"></div>
+
+  <section class="result" id="result">
+    <h2 id="communityName"></h2>
+    <p id="communityDescription"></p>
+    <a id="communityLink" href="#" target="_blank"
+       rel="noopener noreferrer">
+      Visitar comunidade
+    </a>
+  </section>
+  <section class="error-page" id="errorPage">
+  <div class="error-code">404</div>
+
+  <h2>Endereço não encontrado</h2>
+
+  <p>
+    Não encontramos essa comunidade na rede ERMO.
+    Confira se o endereço foi digitado corretamente.
+  </p>
+
+  <a href="resolver.html">
+    Voltar à ERMO Network
+  </a>
+</section>
+</main>
+
+<footer>
+  ERMO NETWORK © 2026 · Sistema de endereços comunitários
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const SUPABASE_URL =
+  "https://dgcwrxrgeobwduynoyod.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_TkpO7ERPQySrZ1fZX2hkNg_qjR9afoZ";
+
+const db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+const form = document.getElementById("resolverForm");
+const input = document.getElementById("address");
+const button = document.getElementById("resolveButton");
+const message = document.getElementById("message");
+const result = document.getElementById("result");
+
+function normalizeAddress(value) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\.ermo$/, "");
+}
+
+async function resolveAddress(value) {
+  const slug = normalizeAddress(value);
+
+  result.style.display = "none";
+  message.textContent = "";
+
+  if (!/^[a-z0-9-]{2,40}$/.test(slug)) {
+  showNotFound();
+  return;
+}
+
+  button.disabled = true;
+  button.textContent = "Buscando...";
+  message.textContent = "Consultando a rede ERMO...";
+
+  try {
+    const { data, error } = await db
+      .from("communities")
+      .select("name, slug, description, website_url, active")
+      .eq("slug", slug)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (!data || !data.active) {
+  showNotFound();
+  return;
+}
+
+    if (!data.website_url) {
+      message.textContent =
+        "A comunidade foi encontrada, mas ainda não possui site cadastrado.";
+      return;
+    }
+
+    let destination;
+
+    try {
+      destination = new URL(data.website_url);
+
+      if (destination.protocol !== "https:" &&
+          destination.protocol !== "http:") {
+        throw new Error("Protocolo inválido");
+      }
+    } catch {
+      message.textContent =
+        "O endereço do site cadastrado é inválido.";
+      return;
+    }
+
+    message.textContent =
+  "Comunidade encontrada! Redirecionando para " +
+  data.name + "...";
+// Registrar visita na ERMO Network
+try {
+  const { error: visitError } = await db
+    .from("community_visits")
+    .insert({
+      community_slug: data.slug
+    });
+
+  if (visitError) {
+    console.error("Erro ao registrar visita:", visitError);
+  }
+} catch (error) {
+  console.error("Falha no registro da visita:", error);
+}
+window.location.assign(destination.href);
+return;
+
+  } catch (error) {
+    console.error(error);
+    message.textContent =
+      "Não foi possível consultar a rede. Tente novamente.";
+  } finally {
+    button.disabled = false;
+    button.textContent = "Acessar";
+  }
+}
+
+form.addEventListener("submit", function(event) {
+  event.preventDefault();
+  resolveAddress(input.value);
+});
+
+const params = new URLSearchParams(window.location.search);
+const requestedAddress = params.get("address");
+
+if (requestedAddress) {
+  input.value = requestedAddress;
+  resolveAddress(requestedAddress);
+}
+  const errorPage = document.getElementById("errorPage");
+
+function showNotFound() {
+  result.style.display = "none";
+  errorPage.style.display = "block";
+  message.textContent = "";
+}
+</script>
+
+</body>
+</html>
